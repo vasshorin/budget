@@ -2,6 +2,17 @@
   text-align: center;
 }
 
+table
+{
+    border-collapse: collapse;
+    /* width: %; */
+    border: 1px solid black;
+}
+
+tr
+{
+    border: 1px solid black
+}
 .App-logo {
   height: 40vmin;
   pointer-events: none;

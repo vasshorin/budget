@@ -44,7 +44,8 @@ const User = mongoose.model('User', userSchema);
 
 // Define the expense schema
 const expenseSchema = new mongoose.Schema({
-  date: Date,
+  id: Number,
+  date: String,
   comment: String,
   amount: Number,
   importance: String,
@@ -120,6 +121,17 @@ app.get('/expenses', (req, res) => {
   });
 });
 
+// delete expense
+app.post('/expenses/:id', (req, res) => {
+  Expense.findByIdAndDelete(req.params.id, (error, expense) => {
+    if (error) {
+      res.status(500).send
+      (error);
+    } else {
+      res.send(expense);
+    }
+  });
+});
 
 const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => {

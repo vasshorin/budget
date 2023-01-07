@@ -1,16 +1,11 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import axios from "axios";
 import axiosConfig from "./components/main/axiosConfig";
-import AppRouter from "./components/main/AppRouter";
-
+import "./App.css";
 
 
 const App = () => {
  // State for the form values
- const [email, setEmail] = useState("");
- const [password, setPassword] = useState("");
- const [name, setName] = useState("");
  const [date, setDate] = useState("");
  const [comment, setComment] = useState("");
  const [amount, setAmount] = useState("");
@@ -19,28 +14,17 @@ const App = () => {
  const [category, setCategory] = useState("");
  const [userId, setUserId] = useState("");
  const [expenses, setExpenses] = useState([]);
+ const [id, setId] = useState("");
 
  // Handle form submission
  const handleSubmit = (event) => {
    event.preventDefault();
 
-   // Send a POST request to the server to create a new user
-  //  axiosConfig
-  //    .post("/users", {
-  //      email: email,
-  //      password: password,
-  //      name: name,
-  //    })
-  //    .then((response) => {
-  //      console.log(response.data);
-  //    })
-  //    .catch((error) => {
-  //      console.log(error);
-  //    });
-
    // Send a POST request to the server to create a new expense
    axiosConfig
      .post("/newExpenses", {
+      // Set id to the previous id + 1
+       id: id + 1,
        date: date,
        comment: comment,
        amount: amount,
@@ -51,6 +35,10 @@ const App = () => {
      })
      .then((response) => {
        console.log(response.data);
+        // Add the new expense to the list of expenses in the state
+        setExpenses([...expenses, response.data]);
+        // Set the id to the previous id + 1, if id is 0, set it to 1 instead of 0, else set it to the previous id + 1
+        setId(id === 0 ? 1 : id + 1);
      })
      .catch((error) => {
        console.log(error);
@@ -62,55 +50,34 @@ const App = () => {
    axiosConfig
      .get("/expenses")
      .then((response) => {
-       setExpenses(response.data);
+      //  setExpenses(response.data);
+      setExpenses([...response.data, {date: date, comment: comment, amount: amount, importance: importance, account: account, category: category, userId: userId}]);
      })
      .catch((error) => {
        console.log(error);
      });
  }, []);
 
+// Delete an expense from the server and update the list of expenses in the state when the user clicks the delete button for an expense
+const handleDelete = (id) => {
+  axiosConfig.post(`/expenses/${id}`).then((response) => {
+    const newExpenses = expenses.filter((expense) => expense._id !== id);
+    setExpenses(newExpenses);
+  });
+};
+
  return (
    <div>
      <h1>Expense Tracker</h1>
-     {/* Registration */}
-     {/* <h2>Register</h2>
-     <form onSubmit={handleSubmit}>
-       <label htmlFor="email">Email:</label>
-       <input
-         type="text"
-         id="email"
-         value={email}
-         onChange={(event) => setEmail(event.target.value)}
-       />
-       <br />
-       <label htmlFor="password">Password:</label>
-       <input
-         type="password"
-         id="password"
-         value={password}
-         onChange={(event) => setPassword(event.target.value)}
-       />
-       <br />
-       <label htmlFor="name">Name:</label>
-       <input
-         type="text"
-         id="name"
-         value={name}
-         onChange={(event) => setName(event.target.value)}
-       />
-       <br />
-       <button type="submit">Register</button>
-     </form> */}
-
-     {/* Expense */}
      <h2>Add Expense</h2>
      <form onSubmit={handleSubmit}>
        <label htmlFor="date">Date:</label>
        <input
-         type="date"
+         type="text"
          id="date"
          value={date}
          onChange={(event) => setDate(event.target.value)}
+         onClick={() => setImportance("")}
        />
        <br />
        <label htmlFor="comment">Comment:</label>
@@ -135,6 +102,8 @@ const App = () => {
          id="importance"
          value={importance}
          onChange={(event) => setImportance(event.target.value)}
+        onClick={() => setImportance("")}
+
        />
        <br />
        <label htmlFor="account">Account:</label>
@@ -151,6 +120,8 @@ const App = () => {
          value={category}
          onChange={(event) => setCategory(event.target.value)}
        >
+        {/* Make a default value first  */}
+          <option value="">Select a category</option>
          <option value="rent">Rent</option>
          <option value="grocery">Grocery</option>
          <option value="dining">Dining</option>
@@ -160,13 +131,37 @@ const App = () => {
        <button type="submit">Add Expense</button>
      </form>
      <h2>Expenses</h2>
-     <ul>
-        {expenses.map((expense) => (
-          <li key={expense._id}>
-            {expense.date} - {expense.comment} - {expense.amount} - {expense.importance} - {expense.account} - {expense.category}
-          </li>
-        ))}
-     </ul>
+     <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Comment</th>
+            <th>Amount</th>
+            <th>Importance</th>
+            <th>Account</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          {expenses.map((expense) => (
+            <tr key={expense._id}>
+              {/* format date using fucntion */}
+              {/* < td > {formatDate(expense.date)}</td> */}
+              <td>{expense.date}</td>
+              <td>{expense.comment}</td>
+              <td>${expense.amount}</td>
+              <td>{expense.importance}</td>
+              <td>{expense.account}</td>
+              <td>{expense.category}</td>
+              <td>
+                {/* Delete button */}
+                <button onClick={() => handleDelete(expense._id)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+  
+     </table>
    </div>
  );
 };
