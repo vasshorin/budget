@@ -50,10 +50,6 @@ const expenseSchema = new mongoose.Schema({
   importance: String,
   account: String,
   category: String,
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
 });
 
 app.get('/index.html', (req, res) => {
@@ -81,7 +77,7 @@ app.post('/users', (req, res) => {
 });
 
 // Create a new expense
-app.post('/expenses', (req, res) => {
+app.post('/newExpenses', (req, res) => {
   const expense = new Expense({
     date: req.body.date,
     comment: req.body.comment,
@@ -112,7 +108,21 @@ app.get('/users/:userId/expenses', (req, res) => {
   });
 });
 
-// Start the server
-app.listen(3000, () => {
-  console.log('Server listening on port 3000');
+// Get all expenses
+app.get('/expenses', (req, res) => {
+  Expense.find((error, expenses) => {
+    if (error) {
+      res.status
+      (500).send(error);
+    } else {
+      res.send(expenses);
+    }
+  });
 });
+
+
+const PORT = process.env.PORT || 3004;
+app.listen(PORT, () => {
+    console.log(`Our app is running on port htpp://localhost:${ PORT }`);
+});
+

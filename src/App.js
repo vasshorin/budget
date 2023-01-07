@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
 import axios from "axios";
+import axiosConfig from "./components/main/axiosConfig";
 import AppRouter from "./components/main/AppRouter";
 
 
@@ -24,22 +25,22 @@ const App = () => {
    event.preventDefault();
 
    // Send a POST request to the server to create a new user
-   axios
-     .post("/users", {
-       email: email,
-       password: password,
-       name: name,
-     })
-     .then((response) => {
-       console.log(response.data);
-     })
-     .catch((error) => {
-       console.log(error);
-     });
+  //  axiosConfig
+  //    .post("/users", {
+  //      email: email,
+  //      password: password,
+  //      name: name,
+  //    })
+  //    .then((response) => {
+  //      console.log(response.data);
+  //    })
+  //    .catch((error) => {
+  //      console.log(error);
+  //    });
 
    // Send a POST request to the server to create a new expense
-   axios
-     .post("/expenses", {
+   axiosConfig
+     .post("/newExpenses", {
        date: date,
        comment: comment,
        amount: amount,
@@ -58,8 +59,8 @@ const App = () => {
 
  // Fetch the expenses from the server when the component mounts
  useEffect(() => {
-   axios
-     .get("/users/:userId/expenses")
+   axiosConfig
+     .get("/expenses")
      .then((response) => {
        setExpenses(response.data);
      })
@@ -160,11 +161,11 @@ const App = () => {
      </form>
      <h2>Expenses</h2>
      <ul>
-       {expenses.map((expense) => (
-         <li key={expense._id}>
-           {expense.date} - {expense.comment} - {expense.amount}
-         </li>
-       ))}
+        {expenses.map((expense) => (
+          <li key={expense._id}>
+            {expense.date} - {expense.comment} - {expense.amount} - {expense.importance} - {expense.account} - {expense.category}
+          </li>
+        ))}
      </ul>
    </div>
  );
