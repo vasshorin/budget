@@ -39,6 +39,12 @@ const App = () => {
         setExpenses([...expenses, response.data]);
         // Set the id to the previous id + 1, if id is 0, set it to 1 instead of 0, else set it to the previous id + 1
         setId(id === 0 ? 1 : id + 1);
+        setDate("");
+        setComment("");
+        setAmount("");
+        setImportance("");
+        setAccount("");
+        setCategory("");
      })
      .catch((error) => {
        console.log(error);
@@ -64,6 +70,11 @@ const handleDelete = (id) => {
     const newExpenses = expenses.filter((expense) => expense._id !== id);
     setExpenses(newExpenses);
   });
+};
+
+const filterExpenses = (event) => {
+  const filteredExpenses = expenses.filter((expense) => expense.importance === event.target.value);
+  setExpenses(filteredExpenses);
 };
 
  return (
@@ -118,19 +129,27 @@ const handleDelete = (id) => {
        <select
          id="category"
          value={category}
+         required={true}
          onChange={(event) => setCategory(event.target.value)}
+        //  Has to be selected
+          
        >
         {/* Make a default value first  */}
-          <option value="">Select a category</option>
+         <option value="">Select a category</option>
          <option value="rent">Rent</option>
          <option value="grocery">Grocery</option>
          <option value="dining">Dining</option>
          <option value="fees">Fees</option>
        </select>
        <br />
-       <button type="submit">Add Expense</button>
+       {/* Submit button on clikc reset all of the fields */}
+        <button type="submit" onClick={() => setDate("")
+      
+      }>Submit</button>
+
      </form>
      <h2>Expenses</h2>
+    
      <table>
         <thead>
           <tr>
@@ -145,8 +164,6 @@ const handleDelete = (id) => {
         <tbody>
           {expenses.map((expense) => (
             <tr key={expense._id}>
-              {/* format date using fucntion */}
-              {/* < td > {formatDate(expense.date)}</td> */}
               <td>{expense.date}</td>
               <td>{expense.comment}</td>
               <td>${expense.amount}</td>
@@ -156,6 +173,7 @@ const handleDelete = (id) => {
               <td>
                 {/* Delete button */}
                 <button onClick={() => handleDelete(expense._id)}>Delete</button>
+                {/* Edit buttons */}
               </td>
             </tr>
           ))}

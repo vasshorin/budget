@@ -13,9 +13,10 @@ tr
 {
     border: 1px solid black
 }
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+td
+{
+    border: 1px solid black;
+    padding: 5px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
