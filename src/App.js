@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
+import { useRef } from "react";
 import axiosConfig from "./components/main/axiosConfig";
 import "./App.css";
 
@@ -18,7 +19,18 @@ const App = () => {
   const [categories, setCategories] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [newAccount, setNewAccount] = useState("");
+  const [totalExpenses, setTotalExpenses] = useState(0);
 
+ // Get the current month and year
+const currentMonth = new Date().getMonth();
+const currentYear = new Date().getFullYear();
+
+// Use the Array.prototype.filter() method to filter the expenses by the current month and year
+const currentMonthExpenses = expenses.filter(
+  (expense) =>
+    new Date(expense.date).getMonth() === currentMonth &&
+    new Date(expense.date).getFullYear() === currentYear
+);
   // Handle form submission
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -26,7 +38,6 @@ const App = () => {
     // Send a POST request to the server to create a new expense
     axiosConfig
       .post("/newExpenses", {
-        // Set id to the previous id + 1
         id: id + 1,
         date: date,
         comment: comment,
@@ -69,11 +80,25 @@ const App = () => {
     setNewAccount(event.target.value);
   };
 
-  // Handle form input changes
-  const handleDateChange = (event) => {
-    setDate(event.target.value);
-  };
-
+  useEffect(() => {
+    axiosConfig
+      .get("/expenses")
+      .then((response) => {
+        const categoryTotals = {};
+        response.data.forEach((expense) => {
+          if (categoryTotals[expense.category]) {
+            categoryTotals[expense.category] += expense.amount;
+          } else {
+            categoryTotals[expense.category] = expense.amount;
+          }
+        });
+        setTotalExpenses(categoryTotals);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+  
 
 
 
@@ -111,6 +136,8 @@ const App = () => {
         console.log(error);
       });
   }, []);
+
+  
 
 // Add new category
   const addCategory = (event) => {
@@ -155,6 +182,18 @@ const App = () => {
         console.log(error);
       });
   }, []);
+
+  // Fetch the total expenses from the server when the component mounts
+  // Calculate the total expenses for each category and display it in the UI when the component mounts
+  const calculateTotalExpenses = () => {
+    let total = 0;
+    expenses.forEach((expense) => {
+      total += expense.amount;
+    });
+    setTotalExpenses(total);
+  };
+  
+  
 
 
   // Delete an expense from the server and update the list of expenses in the state when the user clicks the delete button for an expense
@@ -287,8 +326,7 @@ const App = () => {
         <br />
         <br />
         <br />
-        {/* Submit button on click reset all of the fields */}
-        <button type="submit" onClick={() => setDate("")}>
+        <button type="submit">
           Submit
         </button>
       </form>
@@ -319,7 +357,33 @@ const App = () => {
         <option value="fees">Fees</option>
       </select>
 
-      {/* Display the expenses */}
+      {/* Filter date range*/}
+      <h2>Filter Date Range</h2>
+      {/* <form onSubmit={handleSubmit}>
+        <label htmlFor="date">Date:</label>
+        <input
+          type="text"
+          id="date"
+          value={date}
+          onChange={(event) => setDate(event.target.value)}
+          onClick={() => setImportance("")}
+        />
+
+        <label htmlFor="date">Date:</label>
+        <input
+
+          type="text"
+          id="date"
+          value={date}
+          onChange={(event) => setDate(event.target.value)}
+          onClick={() => setImportance("")}
+        />
+        <button type="submit" onClick={currentMonthExpenses}> Filter Date Range</button>
+      </form> */}
+
+      
+
+      {/* Display the expenses last one entered should be on top*/}
       <h2>Expenses</h2>
       <table>
         <thead>
@@ -349,9 +413,32 @@ const App = () => {
                 {/* Edit buttons */}
               </td>
             </tr>
+            // Add expenses for each category together and display total
           ))}
         </tbody>
       </table>
+
+      {/* Display total expenses for each category per custom date range */}
+       <h2>Total Expenses</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+        {Object.entries(totalExpenses).map(([category, total]) => (
+          <tr>
+            <td>{category}</td>
+            <td>${total}</td>
+          </tr>
+        ))}
+      
+        </tbody>
+      </table>
+
     </div>
   );
 };
