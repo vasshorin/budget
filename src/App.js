@@ -164,7 +164,9 @@ const App = () => {
           <option value="fees">Fees</option>
         </select>
         <br />
-        {/* Submit button on clikc reset all of the fields */}
+        <br />
+        <br />
+        {/* Submit button on click reset all of the fields */}
         <button type="submit" onClick={() => setDate("")}>
           Submit
         </button>
@@ -197,10 +199,6 @@ const App = () => {
         <option value="fees">Fees</option>
       </select>
       
-
-  
-      
-
       {/* Display the expenses */}
       <h2>Expenses</h2>
       <table>
@@ -209,9 +207,9 @@ const App = () => {
             <th>Date</th>
             <th>Comment</th>
             <th>Amount</th>
-            <th>Importance</th>
             <th>Account</th>
             <th>Category</th>
+            <th>Importance</th>
           </tr>
         </thead>
         <tbody>
@@ -220,9 +218,9 @@ const App = () => {
               <td>{expense.date}</td>
               <td>{expense.comment}</td>
               <td>${expense.amount}</td>
-              <td>{expense.importance}</td>
               <td>{expense.account}</td>
               <td>{expense.category}</td>
+              <td>{expense.importance}</td>
               <td>
                 {/* Delete button */}
                 <button onClick={() => handleDelete(expense._id)}>
