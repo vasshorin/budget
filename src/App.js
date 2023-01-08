@@ -14,6 +14,10 @@ const App = () => {
   const [userId, setUserId] = useState("");
   const [expenses, setExpenses] = useState([]);
   const [id, setId] = useState("");
+  const [newOption, setNewOption] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [newAccount, setNewAccount] = useState("");
 
   // Handle form submission
   const handleSubmit = (event) => {
@@ -50,12 +54,34 @@ const App = () => {
       });
   };
 
+  //  Let the user add a new option to the select elemen
+  const handleSubmit1 = (event) => {
+    event.preventDefault();
+    setNewOption("");
+  };
+
+  // Handle form input changes
+  const handleChange = (event) => {
+    setNewOption(event.target.value);
+  };
+
+  const handleChange1 = (event) => {
+    setNewAccount(event.target.value);
+  };
+
+  // Handle form input changes
+  const handleDateChange = (event) => {
+    setDate(event.target.value);
+  };
+
+
+
+
   // Fetch the expenses from the server when the component mounts
   useEffect(() => {
     axiosConfig
       .get("/expenses")
       .then((response) => {
-        //  setExpenses(response.data);
         setExpenses([
           ...response.data,
           {
@@ -74,6 +100,63 @@ const App = () => {
       });
   }, []);
 
+  // Fetch the categories from the server when the component mounts
+  useEffect(() => {
+    axiosConfig
+      .get("/categories")
+      .then((response) => {
+        setCategories(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
+// Add new category
+  const addCategory = (event) => {
+    event.preventDefault();
+    axiosConfig
+      .post("/newCategory", {
+        category: newOption,
+      })
+      .then((response) => {
+        console.log(response.data);
+        setCategories([...categories, response.data]);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  // Add new account
+  const addAccount = (event) => {
+    event.preventDefault();
+    axiosConfig
+      .post("/newAccount", {
+        account: newAccount,
+      })
+      .then((response) => {
+        console.log(response.data);
+        setAccounts([...accounts, response.data]);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  // Fetch all accounts from the server when the component mounts
+  useEffect(() => {
+    axiosConfig
+      .get("/accounts")
+      .then((response) => {
+        setAccounts(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
+
   // Delete an expense from the server and update the list of expenses in the state when the user clicks the delete button for an expense
   const handleDelete = (id) => {
     axiosConfig.post(`/expenses/${id}`).then((response) => {
@@ -81,14 +164,14 @@ const App = () => {
       setExpenses(newExpenses);
     });
   };
-
+  // Filter expenses by importance 
   const filterExpenses = (event) => {
     const filteredExpenses = expenses.filter(
       (expense) => expense.importance === event.target.value
     );
     setExpenses(filteredExpenses);
   };
-
+  // Filter expenses by account
   const filterBYCategory = (event) => {
     const filteredExpenses = expenses.filter(
       (expense) => expense.category === event.target.value
@@ -100,6 +183,33 @@ const App = () => {
   return (
     <div>
       <h1>Expense Tracker</h1>
+      {/* Add new category */}
+      <h2>Add new category</h2>
+      <form onSubmit={handleSubmit1}>
+        <label htmlFor="newOption">New Category:</label>
+        <input
+          type="text"
+          id="newOption"
+          value={newOption}
+          onChange={handleChange}
+        />
+        <button type="submit" onClick={addCategory}> Add Category</button>
+      </form>
+
+{/* Add new account */}
+      <h2>Add new account</h2>
+      <form onSubmit={handleSubmit1}>
+        <label htmlFor="newAccount">New Account:</label>
+        <input
+          type="text"
+          id="newAccount"
+          value={newAccount}
+          onChange={handleChange1}
+        />
+        <button type="submit" onClick={addAccount}> Add Account</button>
+      </form>
+
+
       <h2>Add Expense</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="date">Date:</label>
@@ -142,12 +252,21 @@ const App = () => {
         </select>
         <br />
         <label htmlFor="account">Account:</label>
-        <input
-          type="text"
+        <select
           id="account"
           value={account}
+          required={true}
           onChange={(event) => setAccount(event.target.value)}
-        />
+        >
+          {/* Make a default value first  */}
+          <option value="">Select an account</option>
+          {accounts.map((account) => (
+            <option key={account._id} value={account.account}>
+              {account.account}
+            </option>
+          ))}
+        </select>
+  
         <br />
         <label htmlFor="category">Category:</label>
         <select
@@ -158,10 +277,12 @@ const App = () => {
         >
           {/* Make a default value first  */}
           <option value="">Select a category</option>
-          <option value="rent">Rent</option>
-          <option value="grocery">Grocery</option>
-          <option value="dining">Dining</option>
-          <option value="fees">Fees</option>
+          {categories.map((category) => (
+            <option key={category._id} value={category.category}>
+              {category.category}
+            </option>
+          ))}
+        
         </select>
         <br />
         <br />
@@ -187,7 +308,6 @@ const App = () => {
 
       <select onChange={filterBYCategory}>
         <input
-
           type="text"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
@@ -198,7 +318,7 @@ const App = () => {
         <option value="dining">Dining</option>
         <option value="fees">Fees</option>
       </select>
-      
+
       {/* Display the expenses */}
       <h2>Expenses</h2>
       <table>
