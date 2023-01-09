@@ -25,24 +25,6 @@ const App = () => {
   const [sortOrder, setSortOrder] = useState("asc");
 
 
-  // Get expenses in specific date range
-  const getExpenses = () => {
-    axiosConfig
-      .get("/expenses", {
-        params: {
-          startDate: startDate,
-          endDate: endDate,
-        },
-      })
-      .then((response) => {
-        setExpenses(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-
   // Sort date 
   const sortByDate = () => {
     if (sortOrder === "asc") {
@@ -163,6 +145,9 @@ const App = () => {
     axiosConfig
       .get("/expenses")
       .then((response) => {
+        if (response.data.length === 0) {
+          setId(0);
+        }
         setExpenses([
           ...response.data.sort((a, b) => {
             return new Date(b.date) - new Date(a.date);
@@ -245,7 +230,8 @@ const App = () => {
         ...totalExpenses,
         [response.data.category]: totalExpenses[response.data.category]
           ? totalExpenses[response.data.category] - response.data.amount
-          : 0,
+         // If the total expenses for the category is 0, display none
+          : {display: "none"}
       });
 
     });
@@ -270,7 +256,7 @@ const App = () => {
     });
     setTotalExpenses(categoryTotals);
   };
-  
+
   
 
   // Filter expenses by importance 
@@ -500,7 +486,6 @@ const App = () => {
             <td>${total}</td>
           </tr>
         ))}
-      
         </tbody>
       </table>
 
