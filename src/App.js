@@ -7,6 +7,8 @@ import "./App.css";
 const App = () => {
   // State for the form values
   const [date, setDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [comment, setComment] = useState("");
   const [amount, setAmount] = useState("");
   const [importance, setImportance] = useState("");
@@ -20,10 +22,34 @@ const App = () => {
   const [accounts, setAccounts] = useState([]);
   const [newAccount, setNewAccount] = useState("");
   const [totalExpenses, setTotalExpenses] = useState(0);
+  const [sortOrder, setSortOrder] = useState("asc");
 
+
+  // Sort date 
+  const sortByDate = () => {
+    if (sortOrder === "asc") {
+      setSortOrder("desc");
+      setExpenses(
+        expenses.sort((a, b) => {
+          return new Date(a.date) - new Date(b.date);
+        })
+      );
+    } else {
+      setSortOrder("asc");
+      setExpenses(
+        expenses.sort((a, b) => {
+          return new Date(b.date) - new Date(a.date);
+        })
+      );
+    }
+  };
+  
  // Get the current month and year
 const currentMonth = new Date().getMonth();
 const currentYear = new Date().getFullYear();
+
+
+
 
 // Use the Array.prototype.filter() method to filter the expenses by the current month and year
 const currentMonthExpenses = expenses.filter(
@@ -31,6 +57,33 @@ const currentMonthExpenses = expenses.filter(
     new Date(expense.date).getMonth() === currentMonth &&
     new Date(expense.date).getFullYear() === currentYear
 );
+
+const renderExpenses = (expenses) => {
+  if (expenses.length === 0) {
+    return <p>No expenses to display</p>;
+  }
+
+  return expenses.map((expense) => {
+    return (
+      <tr key={expense.id}>
+        <td>{expense.date}</td>
+        <td>{expense.comment}</td>
+        <td>{expense.amount}</td>
+        <td>{expense.importance}</td>
+        <td>{expense.account}</td>
+        <td>{expense.category}</td>
+        <td>
+                {/* Delete button */}
+                <button onClick={() => handleDelete(expense._id)}>
+                  Delete
+                </button>
+              </td>
+      </tr>
+    );
+  });
+};
+
+
   // Handle form submission
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -50,7 +103,7 @@ const currentMonthExpenses = expenses.filter(
       .then((response) => {
         console.log(response.data);
         // Add the new expense to the list of expenses in the state
-        setExpenses([...expenses, response.data]);
+        setExpenses([response.data,...expenses]);
         // Set the id to the previous id + 1, if id is 0, set it to 1 instead of 0, else set it to the previous id + 1
         setId(id === 0 ? 1 : id + 1);
         setDate("");
@@ -64,6 +117,11 @@ const currentMonthExpenses = expenses.filter(
         console.log(error);
       });
   };
+
+  // Automatically sort the expenses by date when the component mounts
+  useEffect(() => {
+    setExpenses(expenses.sort(sortByDate));
+  }, []);
 
   //  Let the user add a new option to the select elemen
   const handleSubmit1 = (event) => {
@@ -80,6 +138,7 @@ const currentMonthExpenses = expenses.filter(
     setNewAccount(event.target.value);
   };
 
+  // Total expenses
   useEffect(() => {
     axiosConfig
       .get("/expenses")
@@ -108,7 +167,6 @@ const currentMonthExpenses = expenses.filter(
       .get("/expenses")
       .then((response) => {
         setExpenses([
-          ...response.data,
           {
             date: date,
             comment: comment,
@@ -118,6 +176,7 @@ const currentMonthExpenses = expenses.filter(
             category: category,
             userId: userId,
           },
+          ...response.data,
         ]);
       })
       .catch((error) => {
@@ -253,7 +312,7 @@ const currentMonthExpenses = expenses.filter(
       <form onSubmit={handleSubmit}>
         <label htmlFor="date">Date:</label>
         <input
-          type="text"
+          type="date"
           id="date"
           value={date}
           onChange={(event) => setDate(event.target.value)}
@@ -321,7 +380,6 @@ const currentMonthExpenses = expenses.filter(
               {category.category}
             </option>
           ))}
-        
         </select>
         <br />
         <br />
@@ -351,44 +409,22 @@ const currentMonthExpenses = expenses.filter(
           onChange={(event) => setCategory(event.target.value)}
         />
         <option value="">Select a category</option>
-        <option value="rent">Rent</option>
-        <option value="grocery">Grocery</option>
-        <option value="dining">Dining</option>
-        <option value="fees">Fees</option>
-      </select>
-
-      {/* Filter date range*/}
-      <h2>Filter Date Range</h2>
-      {/* <form onSubmit={handleSubmit}>
-        <label htmlFor="date">Date:</label>
-        <input
-          type="text"
-          id="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-          onClick={() => setImportance("")}
-        />
-
-        <label htmlFor="date">Date:</label>
-        <input
-
-          type="text"
-          id="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-          onClick={() => setImportance("")}
-        />
-        <button type="submit" onClick={currentMonthExpenses}> Filter Date Range</button>
-      </form> */}
-
+        {categories.map((category) => (
+          // If default value is chosen, display all expenses
+          < option key={category._id} value={category.category}>
+            {category.category}
+          </option>
+        ))}
       
+      </select>
 
       {/* Display the expenses last one entered should be on top*/}
       <h2>Expenses</h2>
+
       <table>
         <thead>
           <tr>
-            <th>Date</th>
+            <th onClick={sortByDate}>Date</th>
             <th>Comment</th>
             <th>Amount</th>
             <th>Account</th>
@@ -410,10 +446,8 @@ const currentMonthExpenses = expenses.filter(
                 <button onClick={() => handleDelete(expense._id)}>
                   Delete
                 </button>
-                {/* Edit buttons */}
               </td>
             </tr>
-            // Add expenses for each category together and display total
           ))}
         </tbody>
       </table>
