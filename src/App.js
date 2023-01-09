@@ -25,6 +25,24 @@ const App = () => {
   const [sortOrder, setSortOrder] = useState("asc");
 
 
+  // Get expenses in specific date range
+  const getExpenses = () => {
+    axiosConfig
+      .get("/expenses", {
+        params: {
+          startDate: startDate,
+          endDate: endDate,
+        },
+      })
+      .then((response) => {
+        setExpenses(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+
   // Sort date 
   const sortByDate = () => {
     if (sortOrder === "asc") {
@@ -99,7 +117,6 @@ const App = () => {
             ? totalExpenses[response.data.category] + response.data.amount
             : response.data.amount,
         });
-
       })
       .catch((error) => {
         console.log(error);
@@ -233,6 +250,29 @@ const App = () => {
 
     });
   };
+
+  // Filter expenses by custom date range and update the total expenses
+  const filterByDate = (event) => {
+    event.preventDefault();
+    const filteredExpenses = expenses.filter(
+      (expense) =>
+        new Date(expense.date) >= new Date(startDate) &&
+        new Date(expense.date) <= new Date(endDate)
+    );
+    setExpenses(filteredExpenses);
+    const categoryTotals = {};
+    filteredExpenses.forEach((expense) => {
+      if (categoryTotals[expense.category]) {
+        categoryTotals[expense.category] += expense.amount;
+      } else {
+        categoryTotals[expense.category] = expense.amount;
+      }
+    });
+    setTotalExpenses(categoryTotals);
+  };
+  
+  
+
   // Filter expenses by importance 
   const filterExpenses = (event) => {
     const filteredExpenses = expenses.filter(
@@ -252,7 +292,7 @@ const App = () => {
   return (
     <div>
       <h1>Expense Tracker</h1>
-      {/* Add new category */}
+{/* =============================== ADD CATEGORY/ACCOUNTS ============================== */}
       <h2>Add new category</h2>
       <form onSubmit={handleSubmit1}>
         <label htmlFor="newOption">New Category:</label>
@@ -278,7 +318,7 @@ const App = () => {
         <button type="submit" onClick={addAccount}> Add Account</button>
       </form>
 
-
+{/* =============================== EXPENSES ============================== */}
       <h2>Add Expense</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="date">Date:</label>
@@ -360,6 +400,7 @@ const App = () => {
         </button>
       </form>
 
+{/* =============================== FILTER ============================== */}
       <h2>Filter Expenses</h2>
       <select onChange={filterExpenses}>
         <input
@@ -381,17 +422,37 @@ const App = () => {
         />
         <option value="">Select a category</option>
         {categories.map((category) => (
-          // If default value is chosen, display all expenses
           < option key={category._id} value={category.category}>
             {category.category}
           </option>
         ))}
-      
       </select>
 
+      {/* Date range for expsnses */}
+      <h2>Date Range</h2>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="startDate">From:</label>
+        <input
+          type="date"
+          id="startDate"
+          value={startDate}
+          onChange={(event) => setStartDate(event.target.value)}
+        />
+        <br />
+        <label htmlFor="endDate">To:</label>
+        <input
+          type="date"
+          id="endDate"
+          value={endDate}
+          onChange={(event) => setEndDate(event.target.value)}
+        />
+        <br />
+        <button type="submit" onClick={filterByDate}> Filter</button>
+      </form>
+
+{/* =============================== EXPENSES ============================== */}
       {/* Display the expenses last one entered should be on top*/}
       <h2>Expenses</h2>
-
       <table>
         <thead>
           <tr>
@@ -423,9 +484,8 @@ const App = () => {
         </tbody>
       </table>
 
-      {/* Display total expenses for each category per custom date range */}
+{/* =============================== TOTALS ============================== */}
        <h2>Total Expenses</h2>
-
       <table>
         <thead>
           <tr>
