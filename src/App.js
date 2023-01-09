@@ -44,46 +44,25 @@ const App = () => {
     }
   };
   
- // Get the current month and year
-const currentMonth = new Date().getMonth();
-const currentYear = new Date().getFullYear();
-
-
-
-
-// Use the Array.prototype.filter() method to filter the expenses by the current month and year
-const currentMonthExpenses = expenses.filter(
-  (expense) =>
-    new Date(expense.date).getMonth() === currentMonth &&
-    new Date(expense.date).getFullYear() === currentYear
-);
-
-const renderExpenses = (expenses) => {
-  if (expenses.length === 0) {
-    return <p>No expenses to display</p>;
-  }
-
-  return expenses.map((expense) => {
-    return (
-      <tr key={expense.id}>
-        <td>{expense.date}</td>
-        <td>{expense.comment}</td>
-        <td>{expense.amount}</td>
-        <td>{expense.importance}</td>
-        <td>{expense.account}</td>
-        <td>{expense.category}</td>
-        <td>
-                {/* Delete button */}
-                <button onClick={() => handleDelete(expense._id)}>
-                  Delete
-                </button>
-              </td>
-      </tr>
-    );
-  });
-};
-
-
+  // Sort amount
+  const sortByAmount = () => {
+    if (sortOrder === "asc") {
+      setSortOrder("desc");
+      setExpenses(
+        expenses.sort((a, b) => {
+          return a.amount - b.amount;
+        })
+      );
+    } else {
+      setSortOrder("asc");
+      setExpenses(
+        expenses.sort((a, b) => {
+          return b.amount - a.amount;
+        })
+      );
+    }
+  };
+  
   // Handle form submission
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -112,16 +91,20 @@ const renderExpenses = (expenses) => {
         setImportance("");
         setAccount("");
         setCategory("");
+        setUserId("");
+        // Update the total expenses
+        setTotalExpenses({
+          ...totalExpenses,
+          [response.data.category]: totalExpenses[response.data.category]
+            ? totalExpenses[response.data.category] + response.data.amount
+            : response.data.amount,
+        });
+
       })
       .catch((error) => {
         console.log(error);
       });
   };
-
-  // Automatically sort the expenses by date when the component mounts
-  useEffect(() => {
-    setExpenses(expenses.sort(sortByDate));
-  }, []);
 
   //  Let the user add a new option to the select elemen
   const handleSubmit1 = (event) => {
@@ -158,31 +141,23 @@ const renderExpenses = (expenses) => {
       });
   }, []);
   
-
-
-
   // Fetch the expenses from the server when the component mounts
   useEffect(() => {
     axiosConfig
       .get("/expenses")
       .then((response) => {
         setExpenses([
-          {
-            date: date,
-            comment: comment,
-            amount: amount,
-            importance: importance,
-            account: account,
-            category: category,
-            userId: userId,
-          },
-          ...response.data,
+          ...response.data.sort((a, b) => {
+            return new Date(b.date) - new Date(a.date);
+          }),
         ]);
+        setId(response.data.length);
       })
       .catch((error) => {
         console.log(error);
       });
   }, []);
+
 
   // Fetch the categories from the server when the component mounts
   useEffect(() => {
@@ -242,24 +217,20 @@ const renderExpenses = (expenses) => {
       });
   }, []);
 
-  // Fetch the total expenses from the server when the component mounts
-  // Calculate the total expenses for each category and display it in the UI when the component mounts
-  const calculateTotalExpenses = () => {
-    let total = 0;
-    expenses.forEach((expense) => {
-      total += expense.amount;
-    });
-    setTotalExpenses(total);
-  };
   
-  
-
-
   // Delete an expense from the server and update the list of expenses in the state when the user clicks the delete button for an expense
   const handleDelete = (id) => {
     axiosConfig.post(`/expenses/${id}`).then((response) => {
       const newExpenses = expenses.filter((expense) => expense._id !== id);
       setExpenses(newExpenses);
+      // Update the total expenses
+      setTotalExpenses({
+        ...totalExpenses,
+        [response.data.category]: totalExpenses[response.data.category]
+          ? totalExpenses[response.data.category] - response.data.amount
+          : 0,
+      });
+
     });
   };
   // Filter expenses by importance 
@@ -426,7 +397,7 @@ const renderExpenses = (expenses) => {
           <tr>
             <th onClick={sortByDate}>Date</th>
             <th>Comment</th>
-            <th>Amount</th>
+            <th onClick={sortByAmount}>Amount</th>
             <th>Account</th>
             <th>Category</th>
             <th>Importance</th>
