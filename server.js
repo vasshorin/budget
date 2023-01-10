@@ -1,33 +1,28 @@
 // server.js
-
 const express = require("express");
 const mongoose = require("mongoose");
-const mongoURI =
-  "mongodb+srv://testUser:testUser@cluster0.etygx.mongodb.net/new?retryWrites=true&w=majority";
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { default: axios } = require("axios");
+const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
+const MongoDBSession = require("connect-mongodb-session")(session);
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+const User = require("./models/User");
+const Expense = require("./models/Expenses");
+const Category = require("./models/Category");
+const Account = require("./models/Account");
+
+
+const mongoURI =
+  "mongodb+srv://testUser:testUser@cluster0.etygx.mongodb.net/new?retryWrites=true&w=majority";
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// Fix headers that are sent to the client after they are sent
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  ); // If needed
-  res.header("Access-Control-Allow-Headers", "X-Requested-With,content-type"); // If needed
-  res.header("Access-Control-Allow-Credentials", true); // If needed
-  next();
-});
-
-app.use(bodyParser.json());
-// Placeholder %PUBLIC_URL% for the public folder
-app.use(express.static(__dirname + "/public"));
 
 // Connect to the MongoDB database
 mongoose
@@ -36,53 +31,32 @@ mongoose
     console.log("Connected to database!");
   });
 
-// Define the user schema
-const userSchema = new mongoose.Schema({
-  email: String,
-  password: String,
-  name: String,
-  expenses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Expense" }],
+
+  // Create a session store
+const store = new MongoDBSession({
+  uri: mongoURI,
+  collection: "mySessions",
 });
 
-// Create the User model
-const User = mongoose.model("User", userSchema);
+app.use(session ({
+  secret: "keyboard cat",
+  resave: false,
+  saveUninitialized: false,
+  store: store
+}))
 
-// Define the expense schema
-const expenseSchema = new mongoose.Schema({
-  id: Number,
-  date: String,
-  comment: String,
-  amount: Number,
-  importance: String,
-  account: String,
-  category: String,
-});
 
-// Define the category schema
-const categorySchema = new mongoose.Schema({
-  category: String,
-});
-
-// Create the Category model
-const Category = mongoose.model("Category", categorySchema);
-
-// Define the account schema
-const accountSchema = new mongoose.Schema({
-  account: String,
-});
-
-// Create the Account model
-const Account = mongoose.model("Account", accountSchema);
-
-app.get("/index.html", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
-});
-
-// Create the Expense model
-const Expense = mongoose.model("Expense", expenseSchema);
+// Middleware function to protect a route
+const requireLogin = (req, res, next) => {
+  if (!req.session.user) {
+    res.redirect("/login");
+  } else {
+    next();
+  }
+};
 
 // Create a new user
-app.post("/users", (req, res) => {
+app.post("api/newUser", (req, res) => {
   const user = new User({
     email: req.body.email,
     password: req.body.password,
@@ -94,6 +68,25 @@ app.post("/users", (req, res) => {
       res.status(500).send(error);
     } else {
       res.send(user);
+    }
+  });
+});
+
+// Login route
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  
+  // Verify the email and password
+  User.findOne({ email, password }, (error, user) => {
+    if (error) {
+      res.status(500).send(error);
+    } else if (!user) {
+      res.status(401).send("Email or password is incorrect");
+    } else {
+      // Set the session variable to indicate that the user is logged in
+      req.session.user = user;
+      // Redirect the user to the protected page
+      res.redirect("/protected-page");
     }
   });
 });
