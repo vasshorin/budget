@@ -64,19 +64,20 @@ const Expenses = () => {
     // Handle form submission
     const handleSubmit = (event) => {
       event.preventDefault();
-  
-      // Send a POST request to the server to create a new expense
+      // get userid from the session
+
+      // Create a new expense object with the data from the form 
+      const newExpense = {
+        date: date,
+        comment: comment,
+        amount: amount,
+        importance: importance,
+        account: account,
+        category: category,
+      };
+      // add to the users expenses
       axiosConfig
-        .post("/newExpenses", {
-          id: id + 1,
-          date: date,
-          comment: comment,
-          amount: amount,
-          importance: importance,
-          account: account,
-          category: category,
-          userId: userId,
-        })
+        .post("/users/:userId/expenses", newExpense)
         .then((response) => {
           console.log(response.data);
           // Add the new expense to the list of expenses in the state
@@ -141,7 +142,7 @@ const Expenses = () => {
     // Fetch the expenses from the server when the component mounts
     useEffect(() => {
       axiosConfig
-        .get("/expenses")
+        .get("/users/:userId/expenses")
         .then((response) => {
           if (response.data.length === 0) {
             setId(0);

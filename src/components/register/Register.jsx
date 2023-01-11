@@ -1,6 +1,5 @@
 import React from "react";
 import { useRef, useState, useEffect } from "react";
-import "./register.css";
 import {
   faCheck,
   faTimes,
@@ -11,7 +10,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import axiosConfig from '../../routes/axiosConfig'
 
+import "./register.css";
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 const USER_REGEX = /^[a-zA-Z0-9]{3,23}$/;
 const PASSWORD_REGEX = /^[a-zA-Z0-9]{6,23}$/;
 const REGISTER_URL = "/register"
